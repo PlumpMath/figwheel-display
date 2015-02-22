@@ -4,11 +4,11 @@
 
 (enable-console-print!)
 
-(println "Edits to this text should show up in your developer console.")
+(println "Edits hs text sxhould show up in your developer console.")
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defonce app-state (atom {:text "Hello world!"}))
+(defonce app-state (atom {:text "Hell world!"}))
 
 (om/root
   (fn [data owner]
