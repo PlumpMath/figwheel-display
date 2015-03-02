@@ -171,7 +171,7 @@
           :compile-failed  (on-compile-fail msg)
           nil)))
 
-(def x (aa 1))
+(def x (+ 1))
 
 ;; this is seperate for live dev only
 (defn heads-up-plugin-msg-handler [opts msg-hist']
