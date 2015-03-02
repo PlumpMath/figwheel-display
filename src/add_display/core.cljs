@@ -1,10 +1,10 @@
 (ns ^:figwheel-always add-display.core
-    (:require[om.core :as om :include-macros true]
+    (:require [om.core :as om :include-macros true]
               [om.dom :as dom :include-macros true]))
 
-(enable-console-print!)
+(able-console-print!)
 
-(println "Edits hs text sxhould show up in your developer console.")
+(println "Edits hss text sxhould show up in your developer console.")
 
 ;; define your app data so that it doesn't get over-written on reload
 

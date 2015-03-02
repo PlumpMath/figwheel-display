@@ -138,12 +138,16 @@
 (defn display-error [formatted-messages]
   (let [[file-name file-line] (first (keep file-and-line-number formatted-messages))
         msg (apply str (map #(str "<div>" % "</div>") formatted-messages))]
-    (display-heads-up {:backgroundColor "rgba(255, 161, 161, 0.95)"}
-                      (str (close-link) (heading "Compile Error") (file-selector-div file-name file-line msg)))))
+    (go (<! (clear))
+        (display-heads-up {:backgroundColor "rgba(255, 161, 161, 0.95)"}
+                          (str (close-link) (heading "Compile Error") (file-selector-div file-name file-line msg))))
+    ))
 
 (defn display-system-warning [header msg]
-  (display-heads-up {:backgroundColor "rgba(255, 220, 110, 0.95)" }
+  (go (<! (clear))
+      (display-heads-up {:backgroundColor "rgba(255, 220, 110, 0.95)" }
                     (str (close-link) (heading header) (format-line msg))))
+  )
 
 (defn display-warning [msg]
   (display-system-warning "Compile Warning" msg))
