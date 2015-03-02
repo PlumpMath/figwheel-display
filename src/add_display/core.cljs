@@ -2,7 +2,7 @@
     (:require [om.core :as om :include-macros true]
               [om.dom :as dom :include-macros true]))
 
-(able-console-print!)
+(enable-console-print!)
 
 (println "Edits hss text sxhould show up in your developer console.")
 

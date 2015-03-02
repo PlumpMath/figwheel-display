@@ -60,23 +60,31 @@
   (and (= (first msg-names) :files-changed)
        (not (reload-file?* (second msg-names) opts))))
 
+;; State depending on the message qeue
+
+(defn eq-qeue? [xs qs]
+  (= xs (take (count (if (coll? xs) xs [xs])) qs)))
+
 (defn warning-append-state? [msg-names]
-  (= [:compile-warning :compile-warning] (take 2 msg-names)))
+  (= [:compile-warning :compile-started :compile-warning] (take 3 msg-names)))
 
 (defn warning-state? [msg-names]
   (= :compile-warning (first msg-names)))
 
 (defn rewarning-state? [msg-names]
-  (= [:compile-warning :files-changed :compile-warning] (take 3 msg-names)))
+  (= [:compile-warning :compile-started :files-changed :compile-warning] (take 4 msg-names)))
 
 (defn compile-started? [msg-names]
   (= :compile-started (first msg-names)))
+
+(defn recompiling-error? [msg-names]
+  (= [:compile-started :compile-warning]))
 
 (defn compile-fail-state? [msg-names]
   (= :compile-failed (first msg-names)))
 
 (defn compile-refail-state? [msg-names]
-  (= [:compile-failed :compile-failed] (take 2 msg-names)))
+  (= [:compile-failed :compile-started :compile-failed] (take 3 msg-names)))
 
 (defn css-loaded-state? [msg-names]
   (= :css-files-changed (first msg-names)))
@@ -163,41 +171,52 @@
           :compile-failed  (on-compile-fail msg)
           nil)))
 
+(def x (aa 1))
+
 ;; this is seperate for live dev only
 (defn heads-up-plugin-msg-handler [opts msg-hist']
   (let [msg-hist (focus-msgs #{:files-changed :compile-started :compile-warning :compile-failed} msg-hist')
         msg-names (map :msg-name msg-hist)
         msg (first msg-hist)]
-    (.log js/console msg-names)
+    (.log js/console "a")
+    ;; The order of the cond matters since some messages match more
+    ;; than one clause. The most specific messages should go first.
     (go
      (cond
-      (compile-started? msg-names)
-      #_(.log js/console "ASFASDFASFDD")
-      (<! (heads-up/flash-starting))
-      
-      (reload-file-state? msg-names opts)
-      (if (:autoload opts)
-        (<! (heads-up/flash-loaded))
-        (<! (heads-up/clear)))
+      (rewarning-state? msg-names)
+      (do
+        (.log js/console "rewarning")
+        (<! (heads-up/clear))
+        (<! (heads-up/display-warning (:message msg))))
+
+      (warning-append-state? msg-names)
+      (do (.log js/console "warning append")
+        (heads-up/append-message (:message msg)))
+
+      (warning-state? msg-names)
+      (do
+        (.log js/console "warning")
+        (.log js/console (clj->js (take 5 msg-names)))
+        (<! (heads-up/display-warning (:message msg))))
 
       (compile-refail-state? msg-names)
       (do
         (<! (heads-up/clear))
         (<! (heads-up/display-error (format-messages (:exception-data msg)))))
-      
+
       (compile-fail-state? msg-names)
       (<! (heads-up/display-error (format-messages (:exception-data msg))))
+
+      (reload-file-state? msg-names opts)
+      (if (:autoload opts)
+        (<! (heads-up/flash-loaded))
+        (<! (heads-up/clear)))
+            
+      (recompiling-error? msg-names)
+      nil
       
-      (warning-append-state? msg-names)
-      (heads-up/append-message (:message msg))
-      
-      (rewarning-state? msg-names)
-      (do
-        (<! (heads-up/clear))
-        (<! (heads-up/display-warning (:message msg))))
-      
-      (warning-state? msg-names)
-      (<! (heads-up/display-warning (:message msg)))
+      (compile-started? msg-names)
+      (<! (heads-up/flash-starting))
       
       (css-loaded-state? msg-names)
       (<! (heads-up/flash-loaded))))))
